@@ -1,7 +1,8 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/finance-management/', // Apna exact GitHub repo name yahan likho, aage-peeche slash (/) zaroori hai
-})
+  // Relative asset paths work in both the browser preview and Capacitor's Android WebView.
+  base: './',
+});

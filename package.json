@@ -1,21 +1,25 @@
 {
-  "name": "finance-management",
+  "name": "azuba-finance-manager",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "homepage": "https://azubatrend.github.io/finance-management",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "android:setup": "npm install && npx cap add android && npx cap sync android",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
-    "firebase": "^12.11.0",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "recharts": "^3.8.1",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor-community/sqlite": "^7.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
@@ -25,8 +29,10 @@
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
-    "gh-pages": "^6.3.0",
     "globals": "^17.4.0",
-    "vite": "^8.0.1"
-  }
+    "vite": "^8.0.1",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3"
+  },
+  "description": "Offline-first local finance manager for web and Android."
 }
