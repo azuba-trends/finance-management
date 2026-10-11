@@ -3,9 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
 
 permissions:
   contents: read
@@ -15,6 +13,9 @@ jobs:
     name: Build debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
     steps:
       - name: Checkout source
@@ -24,7 +25,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -32,11 +32,24 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools, platforms;android-35, build-tools;35.0.0'
-          accept-android-sdk-licenses: true
+      # GitHub's ubuntu-latest runner already includes Android SDK packages.
+      # Avoid setup-android's automatic sdkmanager --licenses call, which is
+      # the step currently failing in this repository's workflow.
+      - name: Use preinstalled Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d "$ANDROID_HOME/platform-tools" || { echo "Android platform-tools missing from runner image"; exit 1; }
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
+            echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          fi
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "Installed SDK packages available on runner:"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list_installed 2>/dev/null || true
+          test -d "$ANDROID_HOME/platforms/android-35" || { echo "Android SDK platform 35 is not preinstalled"; exit 1; }
+          test -d "$ANDROID_HOME/build-tools/35.0.0" || { echo "Android build-tools 35.0.0 are not preinstalled"; exit 1; }
 
       - name: Install JavaScript dependencies
         run: npm install --no-audit --no-fund
@@ -50,7 +63,7 @@ jobs:
       - name: Build web assets
         run: npm run build
 
-      - name: Generate Capacitor Android project
+      - name: Add Capacitor Android platform
         run: npx cap add android
 
       - name: Sync Capacitor plugins and assets
@@ -58,7 +71,7 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew --no-daemon assembleDebug
+        run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
